@@ -13,33 +13,39 @@ from ape_llamapay.constants import FACTORY
 manifest = PackageManifest.parse_file(Path(__file__).parent / "manifest.json")
 
 
+class PoolNotDeployed(Exception):
+    pass
+
+
 class Factory(ManagerAccessMixin):
     @property
     def address(self) -> AddressType:
         ecosystem_name = self.provider.network.ecosystem.name
         network_name = self.provider.network.name
-        return AddressType(FACTORY[ecosystem_name][network_name])
+        return AddressType(FACTORY[ecosystem_name][network_name])  # type: ignore
 
     @property
     def contract(self) -> ContractInstance:
-        return ContractInstance(self.address, manifest.contract_types["LlamaPayFactory"])
+        return ContractInstance(self.address, manifest.contract_types["LlamaPayFactory"])  # type: ignore
 
-    def get_pool_for_token(self, token: str) -> "LlamaPay":
+    def get_pool_for_token(self, token: str) -> "Pool":
         try:
             token = tokens[token].address
         except KeyError:
             pass
 
         address, is_deployed = self.contract.getLlamaPayContractByToken(token)
-        return Pool(address, is_deployed)
+        if not is_deployed:
+            raise PoolNotDeployed()
+
+        return Pool(address)
 
 
 class Pool(ManagerAccessMixin):
-    def __init__(self, address: AddressType, is_deployed: bool):
+    def __init__(self, address: AddressType):
         self.address = address
-        self.is_deployed = is_deployed
 
-    @property
+    @cached_property
     def contract(self):
         return ContractInstance(self.address, manifest.contract_types["LlamaPay"])
 
@@ -48,6 +54,4 @@ class Pool(ManagerAccessMixin):
         return ContractInstance(self.contract.token(), ERC20)
 
     def __repr__(self):
-        return (
-            f"<Pool address={self.address} exists={self.is_deployed} token={self.token.symbol()}>"
-        )
+        return f"<Pool address={self.address} token={self.token.symbol()}>"
