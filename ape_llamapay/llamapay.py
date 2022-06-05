@@ -22,7 +22,7 @@ class Factory(ManagerAccessMixin):
     @property
     def address(self) -> AddressType:
         ecosystem_name = self.provider.network.ecosystem.name
-        network_name = self.provider.network.name.replace('-fork', '')
+        network_name = self.provider.network.name.replace("-fork", "")
         return AddressType(FACTORY[ecosystem_name][network_name])  # type: ignore
 
     @property
@@ -33,12 +33,7 @@ class Factory(ManagerAccessMixin):
         """
         Get pool by token address or symbol.
         """
-        try:
-            token = tokens[token].address
-        except KeyError:
-            pass
-
-        token = self.conversion_manager.convert(token, AddressType)
+        token = self._resolve_token(token)
         address, is_deployed = self.contract.getLlamaPayContractByToken(token)
         if not is_deployed:
             raise PoolNotDeployed("deterministic address: %s" % address)
@@ -49,14 +44,21 @@ class Factory(ManagerAccessMixin):
         """
         Create pool for a token
         """
+        token = self._resolve_token(token)
+        self.contract.createLlamaPayContract(token, **kwargs)
+
+        return self.get_pool(token)
+
+    def _resolve_token(self, token: str) -> AddressType:
+        """
+        Resolve token address by symbol, address or ENS.
+        """
         try:
             token = tokens[token].address
         except KeyError:
             pass
 
-        address = self.contract.createLlamaPayContract(token, **kwargs)
-        
-        return Pool(address)
+        return self.conversion_manager.convert(token, AddressType)
 
 
 class Pool(ManagerAccessMixin):
@@ -69,7 +71,8 @@ class Pool(ManagerAccessMixin):
 
     @cached_property
     def token(self):
-        return ContractInstance(self.contract.token(), ERC20)
+        tok = self.contract.token()
+        return ContractInstance(tok, ERC20)
 
     def __repr__(self):
         return f"<Pool address={self.address} token={self.token.symbol()}>"
