@@ -8,15 +8,19 @@ from ape_llamapay.llamapay import PoolNotDeployed
 
 
 def test_factory_get_pool(factory):
-    dai = tokens["DAI"].address
-    assert factory.get_pool(dai) == factory.get_pool("DAI")
+    assert factory.get_pool(str(tokens["DAI"])) == factory.get_pool("DAI")
 
 
-def test_factory_get_pool_not_address(factory, users):
+def test_factory_get_pool_not_address(factory):
     with pytest.raises(ConversionError):
         factory.get_pool(token_urlsafe(16))
 
 
-def test_factory_get_pool_not_exists(factory, users):
+def test_factory_get_pool_not_exists(factory):
     with pytest.raises(PoolNotDeployed):
         factory.get_pool("UST")  # too soon?
+
+
+def test_create_pool(factory, accounts):
+    pool = factory.create_pool("YFI", sender=accounts[0])
+    assert pool.token == tokens["YFI"]
