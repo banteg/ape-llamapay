@@ -1,0 +1,7 @@
+default_ecosystem: ethereum
+ethereum:
+  default_network: mainnet-fork
+  mainnet_fork:
+    default_provider: foundry
+foundry:
+  port: 7545
