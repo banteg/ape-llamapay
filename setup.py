@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 from setuptools import find_packages, setup  # type: ignore
 
 extras_require = {
@@ -42,13 +41,13 @@ with open("./README.md") as readme:
 
 
 setup(
-    name="<PYPI_NAME>",
+    name="ape-llamapay",
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
-    description="""<PYPI_NAME>: <SHORT_DESCRIPTION>""",
+    description="""ape-llamapay: ape sdk for llamapay""",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="ApeWorX Ltd.",
+    author="banteg",
     author_email="admin@apeworx.io",
     url="https://github.com/ApeWorX/<REPO_NAME>",
     include_package_data=True,
@@ -57,12 +56,12 @@ setup(
     ],  # NOTE: Add 3rd party libraries here
     python_requires=">=3.7,<4",
     extras_require=extras_require,
-    py_modules=["<MODULE_NAME>"],
+    py_modules=["ape_llamapay"],
     license="Apache-2.0",
     zip_safe=False,
     keywords="ethereum",
     packages=find_packages(exclude=["tests", "tests.*"]),
-    package_data={"<MODULE_NAME>": ["py.typed"]},
+    package_data={"ape_llamapay": ["py.typed"]},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
