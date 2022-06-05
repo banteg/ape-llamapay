@@ -19,6 +19,11 @@ class PoolNotDeployed(Exception):
 
 
 class Factory(ManagerAccessMixin):
+    """
+    LlamaPay streams for each token are contained in pools.
+    This factory helps discover and deploy new pools.
+    """
+
     @property
     def address(self) -> AddressType:
         ecosystem_name = self.provider.network.ecosystem.name
@@ -42,7 +47,7 @@ class Factory(ManagerAccessMixin):
 
     def create_pool(self, token: str, **kwargs) -> "Pool":
         """
-        Create pool for a token
+        Create a pool for a token and return it.
         """
         token = self._resolve_token(token)
         self.contract.createLlamaPayContract(token, **kwargs)
@@ -62,6 +67,10 @@ class Factory(ManagerAccessMixin):
 
 
 class Pool(ManagerAccessMixin):
+    """
+    A pool handles all streams for a specific token.
+    """
+
     def __init__(self, address: AddressType):
         self.address = address
 
