@@ -1,5 +1,6 @@
 from secrets import token_urlsafe
 
+import ape
 import pytest
 from ape.exceptions import ConversionError
 from ape_tokens import tokens
@@ -23,4 +24,10 @@ def test_factory_get_pool_not_exists(factory):
 
 def test_create_pool(factory, accounts):
     pool = factory.create_pool("YFI", sender=accounts[0])
+    print(repr(pool))
     assert pool.token == tokens["YFI"]
+
+
+def test_create_pool_non_token(factory, accounts):
+    with ape.reverts():
+        factory.create_pool(str(accounts[1]), sender=accounts[0])
