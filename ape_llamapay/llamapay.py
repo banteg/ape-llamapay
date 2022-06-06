@@ -1,22 +1,21 @@
 from functools import cached_property
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
-from ape.contracts import ContractInstance
 from ape.types import AddressType
 from ape.utils import ManagerAccessMixin
 from ape_tokens import tokens
 from ape_tokens.managers import ERC20
 from ethpm_types import PackageManifest
-from ape.exceptions import ConversionError
 
 from ape_llamapay.constants import FACTORY_DEPLOYMENTS
-
-manifest = PackageManifest.parse_file(Path(__file__).parent / "manifest.json")
 
 
 class PoolNotDeployed(Exception):
     pass
+
+
+manifest = PackageManifest.parse_file(Path(__file__).parent / "manifest.json")
 
 
 class Factory(ManagerAccessMixin):
@@ -25,7 +24,7 @@ class Factory(ManagerAccessMixin):
     This factory helps discover and deploy new pools.
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         self.deployment = FACTORY_DEPLOYMENTS.get(
             ecosystem=self.provider.network.ecosystem.name,
             network=self.provider.network.name.replace("-fork", ""),
@@ -82,17 +81,27 @@ class Pool(ManagerAccessMixin):
     A pool handles all streams for a specific token.
     """
 
-    def __init__(self, address: AddressType):
+    def __init__(self, address: AddressType, factory: Optional[Factory] = None):
         self.address = address
+        self.factory = factory
 
     @cached_property
     def contract(self):
-        return ContractInstance(self.address, manifest.contract_types["LlamaPay"])
+        return self.create_contract(self.address, manifest.contract_types["LlamaPay"])
 
     @cached_property
     def token(self):
-        tok = self.contract.token()
-        return ContractInstance(tok, ERC20)
+        return self.create_contract(self.contract.token(), ERC20)
+
+    def get_logs(self):
+        logs = self.provider.get_contract_logs(
+            self.address,
+            self.contract.contract_type.events,
+            start_block=self.factory.deployment.deploy_block,
+            stop_block=self.chain_manager.blocks.height,
+            block_page_size=10_000,
+        )
+        return list(logs)
 
     def __repr__(self):
         return f"<Pool address={self.address} token={self.token.symbol()}>"
