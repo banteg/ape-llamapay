@@ -10,7 +10,7 @@ from ape_tokens.managers import ERC20
 from ethpm_types import PackageManifest
 from ape.exceptions import ConversionError
 
-from ape_llamapay.constants import FACTORY
+from ape_llamapay.constants import FACTORY_DEPLOYMENTS
 
 manifest = PackageManifest.parse_file(Path(__file__).parent / "manifest.json")
 
@@ -25,15 +25,15 @@ class Factory(ManagerAccessMixin):
     This factory helps discover and deploy new pools.
     """
 
-    @property
-    def address(self) -> AddressType:
-        ecosystem_name = self.provider.network.ecosystem.name
-        network_name = self.provider.network.name.replace("-fork", "")
-        return AddressType(FACTORY[ecosystem_name][network_name])  # type: ignore
-
-    @property
-    def contract(self) -> ContractInstance:
-        return ContractInstance(self.address, manifest.contract_types["LlamaPayFactory"])  # type: ignore
+    def __init__(self) -> None:
+        self.deployment = FACTORY_DEPLOYMENTS.get(
+            ecosystem=self.provider.network.ecosystem.name,
+            network=self.provider.network.name.replace("-fork", ""),
+        )
+        self.contract = self.create_contract(
+            self.deployment.address,
+            manifest.contract_types["LlamaPayFactory"],  # type: ignore
+        )
 
     def get_pool(self, token: str) -> "Pool":
         """

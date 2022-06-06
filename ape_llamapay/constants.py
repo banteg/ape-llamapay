@@ -17,7 +17,9 @@ class Deplyoments(BaseModel):
 
     def get(self, ecosystem, network):
         return next(
-            item for item in self if item.ecosystem == ecosystem and item.network == network
+            item
+            for item in self.__root__
+            if item.ecosystem == ecosystem and item.network == network
         )
 
 
