@@ -1,5 +1,6 @@
 from functools import cached_property
 from pathlib import Path
+from typing import List
 
 from ape.contracts import ContractInstance
 from ape.types import AddressType
@@ -53,6 +54,16 @@ class Factory(ManagerAccessMixin):
         self.contract.createLlamaPayContract(token, **kwargs)
 
         return self.get_pool(token)
+
+    @property
+    def pools(self) -> List["Pool"]:
+        """
+        Get all pools deployed by a factory.
+        """
+        # TODO update to use multicall
+        pool_count = self.contract.getLlamaPayContractCount()
+        pools = [Pool(self.contract.getLlamaPayContractByIndex(i)) for i in range(pool_count)]
+        return pools
 
     def _resolve_token(self, token: str) -> AddressType:
         """

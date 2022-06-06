@@ -31,3 +31,9 @@ def test_create_pool(factory, accounts):
 def test_create_pool_non_token(factory, accounts):
     with ape.reverts():
         factory.create_pool(str(accounts[1]), sender=accounts[0])
+
+
+def test_pools(factory):
+    pools = factory.pools
+    import rich
+    rich.print(pools)
