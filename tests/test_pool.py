@@ -43,3 +43,10 @@ def test_rate(rate):
     r = Rate.parse(rate)
     print(r)
     print(repr(r))
+
+
+def test_create_stream(pool, accounts):
+    rate = "100 DAI/month"
+    receipt = pool.create_stream(accounts[1], rate, sender=accounts[0])
+    log = next(receipt.decode_logs(pool.contract.StreamCreated))
+    assert log.amountPerSec == Rate.parse(rate).per_sec

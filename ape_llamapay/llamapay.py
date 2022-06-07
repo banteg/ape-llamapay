@@ -49,12 +49,12 @@ class Factory(ManagerAccessMixin):
 
         return Pool(address, factory=self)
 
-    def create_pool(self, token: str, **kwargs) -> "Pool":
+    def create_pool(self, token: str, **tx_args) -> "Pool":
         """
         Create a pool for a token and return it.
         """
         token = self._resolve_token(token)
-        self.contract.createLlamaPayContract(token, **kwargs)
+        self.contract.createLlamaPayContract(token, **tx_args)
 
         return self.get_pool(token)
 
@@ -118,17 +118,10 @@ class Pool(ManagerAccessMixin):
     def create_stream(
         self,
         receiver: AddressType,
-        rate: Union[str, "Rate"],
-        reason: Optional[str] = None,
+        rate: str,
         **tx_args,
     ) -> ReceiptAPI:
-        if isinstance(rate, str):
-            rate = Rate.parse(rate)
-
-        if reason is None:
-            return self.contract.createStream(receiver, rate.per_sec, **tx_args)
-        else:
-            return self.contract.createStreamWithReason(receiver, rate.per_sec, reason, **tx_args)
+        return self.contract.createStream(receiver, Rate.parse(rate).per_sec, **tx_args)
 
     def __repr__(self):
         return f"<Pool address={self.address} token={self.symbol}>"
