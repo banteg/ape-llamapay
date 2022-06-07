@@ -1,6 +1,7 @@
+from dataclasses import dataclass
 from decimal import Decimal
-from functools import cached_property, singledispatch, singledispatchmethod
-from typing import List, Literal, Optional
+from functools import cached_property, singledispatchmethod
+from typing import List, Literal, Optional, Union
 
 from ape.api import ReceiptAPI
 from ape.types import AddressType, ContractLog
@@ -9,7 +10,6 @@ from ape_tokens import tokens
 from ape_tokens.managers import ERC20
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak
-from dataclasses import dataclass
 
 from llamapay.constants import CONTRACT_TYPES, DURATION_TO_SECONDS, FACTORY_DEPLOYMENTS, PRECISION
 from llamapay.exceptions import PoolNotDeployed
@@ -168,27 +168,29 @@ class Pool(ManagerAccessMixin):
     def get_balance(self, payer: AddressType) -> Decimal:
         return Decimal(self.contract.getPayerBalance(payer)) / self.scale
 
-    def approve(self, amount: Optional[Decimal] = None, **tx_args) -> ReceiptAPI:
+    def approve(self, amount=None, **tx_args) -> ReceiptAPI:
         """
         Approve token to be deposited into a pool.
 
         Arguments:
-            amount: decimal amount in tokens [default: infinite]
+            amount: str, decimal or wei amount in tokens [default: infinite]
         """
-        amount = 2**256 - 1 if amount is None else amount * self.scale
+        amount = self._convert_amount(amount)
         return self.token.approve(self.address, amount, **tx_args)
 
-    def deposit(self, amount: Decimal, **tx_args) -> ReceiptAPI:
+    def deposit(self, amount, **tx_args) -> ReceiptAPI:
         """
         Deposit funding balance into a pool.
 
         Arguments:
-            amount: decimal amount in tokens
+            amount: str, decimal or wei amount in tokens
         """
+        amount = self._convert_amount(amount)
         if self.token.allowance(tx_args["sender"], self.address) < amount:
             self.approve(amount, **tx_args)
 
-        return self.contract.deposit(amount * self.scale, **tx_args)
+        print(amount)
+        return self.contract.deposit(amount, **tx_args)
 
     def withdraw(self, amount=None, **tx_args) -> ReceiptAPI:
         """
