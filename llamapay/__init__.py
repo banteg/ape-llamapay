@@ -1,8 +1,7 @@
-from .llamapay import Factory, Pool, Rate, Stream
+from .llamapay import Factory, Pool, Stream
 
 __all__ = [
     "Factory",
     "Pool",
     "Stream",
-    "Rate",
 ]

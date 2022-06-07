@@ -290,48 +290,19 @@ class Stream:
         result = self.pool.contract.withdrawable(self.source, self.target, self.rate)
         return Decimal(result.withdrawableAmount) / self.pool.scale
 
-    class Config:
-        arbitrary_types_allowed = True
 
-
-@dataclass
-class Rate:
-    amount: Decimal
-    period: Literal["day", "week", "month", "year"]
-    token: Optional[str] = None
-    raw_value: Optional[int] = None
-
-    @property
-    def per_sec(self):
-        # this is the amount you feed to llamapay contracts
-        return self.raw_value or int(self.amount * PRECISION / DURATION_TO_SECONDS[self.period])
-
-    @singledispatchmethod
-    @classmethod
-    def parse(cls, rate):
-        raise TypeError("unsupported rate type")
-
-    @parse.register
-    @classmethod
-    def parse_int(cls, rate: int):
-        per_month = Decimal(rate) * DURATION_TO_SECONDS["month"] / PRECISION
-        return cls(
-            amount=per_month,
-            period="month",
-            raw_value=rate,
-        )
-
-    @parse.register
-    @classmethod
-    def parse_str(cls, rate: str):
+def convert_rate(rate):
+    if isinstance(rate, int):
+        return rate
+    if isinstance(rate, str):
         amount, period = rate.split("/")
-        assert period in DURATION_TO_SECONDS
-
+        assert period in DURATION_TO_SECONDS, "invalid period"
         try:
             amount, token = amount.split(maxsplit=2)
         except ValueError:
             amount, token = amount, None
 
-        amount = amount.replace(",", "_")
+        amount = Decimal(amount.replace(",", "_"))
+        return int(amount * PRECISION / DURATION_TO_SECONDS[period])
 
-        return cls(amount=Decimal(amount), period=period, token=token)
+    raise ValueError("invalid rate")
