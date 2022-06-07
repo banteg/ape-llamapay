@@ -115,7 +115,7 @@ class Pool(ManagerAccessMixin):
     def get_balance(self, payer: AddressType) -> Decimal:
         return Decimal(self.contract.balances(payer)) / self.scale
 
-    def get_withdrawable(
+    def get_withdrawable_amount(
         self,
         payer: AddressType,
         receiver: AddressType,
@@ -131,6 +131,15 @@ class Pool(ManagerAccessMixin):
         **tx_args,
     ) -> ReceiptAPI:
         return self.contract.createStream(receiver, Rate.parse(rate).per_sec, **tx_args)
+
+    def withdraw(
+        self,
+        payer: AddressType,
+        receiver: AddressType,
+        rate_per_sec: int,
+        **tx_args,
+    ) -> ReceiptAPI:
+        return self.contract.withdraw(payer, receiver, rate_per_sec, **tx_args)
 
     def __repr__(self):
         return f"<Pool address={self.address} token={self.symbol}>"
