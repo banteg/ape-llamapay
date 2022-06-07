@@ -1,6 +1,6 @@
 from decimal import Decimal
 from functools import cached_property
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 
 from ape.types import AddressType
 from ape.utils import ManagerAccessMixin
@@ -9,6 +9,7 @@ from ape_tokens.managers import ERC20
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak
 from pydantic import BaseModel
+from ape.api import ReceiptAPI
 
 from ape_llamapay.constants import (
     CONTRACT_TYPES,
@@ -113,6 +114,21 @@ class Pool(ManagerAccessMixin):
 
     def get_balance(self, payer: AddressType) -> Decimal:
         return Decimal(self.contract.balances(payer)) / self.scale
+
+    def create_stream(
+        self,
+        receiver: AddressType,
+        rate: Union[str, "Rate"],
+        reason: Optional[str] = None,
+        **tx_args,
+    ) -> ReceiptAPI:
+        if isinstance(rate, str):
+            rate = Rate.parse(rate)
+
+        if reason is None:
+            return self.contract.createStream(receiver, rate.per_sec, **tx_args)
+        else:
+            return self.contract.createStreamWithReason(receiver, rate.per_sec, reason, **tx_args)
 
     def __repr__(self):
         return f"<Pool address={self.address} token={self.symbol}>"
