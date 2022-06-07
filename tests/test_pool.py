@@ -1,19 +1,10 @@
 from decimal import Decimal
+
 import pytest
-from ape_tokens.managers import ERC20
-
-from llamapay.constants import DURATION_TO_SECONDS
-from llamapay import Rate
-
-
-### views
 
 
 def test_pool_get_balance(pool):
     assert pool.get_balance("0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52") > 0
-
-
-### actions
 
 
 @pytest.mark.parametrize("amount", [10**21, "1000 DAI", Decimal("1000")])
@@ -55,5 +46,8 @@ def test_pool_withdraw_all(pool, bird, token, amount):
     print(token.balanceOf(str(bird)))
 
 
-def test_pool_create_stream():
-    ...
+def test_pool_create_stream(pool, bird, bee):
+    stream = pool.make_stream(bird, bee, "1000 DAI/month")
+    receipt = stream.create(sender=bird)
+    log = next(receipt.decode_logs(pool.contract.StreamCreated))
+    assert stream.rate == log.amountPerSec
