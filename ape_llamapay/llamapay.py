@@ -175,5 +175,3 @@ class Rate(BaseModel):
 
         return cls(amount=Decimal(amount), period=period, token=token)
 
-    def __repr__(self):
-        return f"{self.amount}/{self.period}"
