@@ -1,0 +1,2 @@
+class PoolNotDeployed(Exception):
+    pass

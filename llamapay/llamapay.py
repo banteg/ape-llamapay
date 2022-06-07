@@ -2,6 +2,7 @@ from decimal import Decimal
 from functools import cached_property
 from typing import List, Literal, Optional, Union
 
+from ape.api import ReceiptAPI
 from ape.types import AddressType, ContractLog
 from ape.utils import ManagerAccessMixin
 from ape_tokens import tokens
@@ -9,18 +10,9 @@ from ape_tokens.managers import ERC20
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak
 from pydantic import BaseModel
-from ape.api import ReceiptAPI
 
-from ape_llamapay.constants import (
-    CONTRACT_TYPES,
-    DURATION_TO_SECONDS,
-    FACTORY_DEPLOYMENTS,
-    PRECISION,
-)
-
-
-class PoolNotDeployed(Exception):
-    pass
+from llamapay.constants import CONTRACT_TYPES, DURATION_TO_SECONDS, FACTORY_DEPLOYMENTS, PRECISION
+from llamapay.exceptions import PoolNotDeployed
 
 
 class Factory(ManagerAccessMixin):
@@ -57,6 +49,11 @@ class Factory(ManagerAccessMixin):
         self.contract.createLlamaPayContract(token, **tx_args)
 
         return self.get_pool(token)
+
+    def create_stream(self, recipient: AddressType, rate: str, token: Optional[str] = None):
+        """
+        >>> factory.create_stream('hentai.eth', '1000 DAI/month')
+        """
 
     @property
     def pools(self) -> List["Pool"]:
@@ -248,6 +245,9 @@ class Stream(BaseModel):
 
     @property
     def balance(self):
+        """
+        Withdrawable balance of a stream.
+        """
         result = self.pool.contract.withdrawable(self.source, self.target, self.rate)
         return Decimal(result.withdrawableAmount) / self.pool.scale
 

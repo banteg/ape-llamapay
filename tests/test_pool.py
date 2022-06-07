@@ -1,10 +1,9 @@
 import pytest
-from ape_llamapay.llamapay import Rate, Stream
-from hexbytes import HexBytes
-from ape_llamapay.constants import DURATION_TO_SECONDS
 from ape_tokens.managers import ERC20
+from hexbytes import HexBytes
 
-from tests.conftest import babe
+from llamapay import Stream
+from llamapay.constants import DURATION_TO_SECONDS
 
 # sample stream from here
 # https://ethtx.info/mainnet/0x7979a77ab8a30bc6cd12e1df92e5ba0478a8907caf6e100317b7968668d0d4a2/

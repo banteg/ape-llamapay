@@ -1,6 +1,6 @@
 # ape-llamapay
 
-TODO: Description
+Manage LlamaPay payment streams effortlessly from Ape Framework.
 
 ## Dependencies
 
@@ -13,7 +13,7 @@ TODO: Description
 You can install the latest release via [`pip`](https://pypi.org/project/pip/):
 
 ```bash
-pip install ape-llamapay
+pip install llamapay
 ```
 
 ### via `setuptools`
@@ -28,7 +28,7 @@ python3 setup.py install
 
 ## Quick Usage
 
-Ape SDK for LlamaPay
+TODO
 
 ## Development
 

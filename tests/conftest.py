@@ -1,6 +1,6 @@
 import pytest
 
-from ape_llamapay import llamapay
+from llamapay import Factory, Pool, Stream
 
 
 @pytest.fixture(scope="session")
@@ -15,7 +15,7 @@ def babe(accounts):
 
 @pytest.fixture(scope="session")
 def factory():
-    return llamapay.Factory()
+    return Factory()
 
 
 @pytest.fixture(scope="session")
@@ -25,4 +25,4 @@ def pool(factory):
 
 @pytest.fixture(scope="session")
 def stream(pool):
-    return llamapay.Stream(source=ape, target=babe, rate=1e20, pool=pool)
+    return Stream(source=ape, target=babe, rate=1e20, pool=pool)

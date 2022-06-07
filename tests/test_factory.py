@@ -5,7 +5,7 @@ import pytest
 from ape.exceptions import ConversionError
 from ape_tokens import tokens
 
-from ape_llamapay.llamapay import PoolNotDeployed
+from llamapay.exceptions import PoolNotDeployed
 
 
 def test_factory_get_pool(factory):
@@ -35,5 +35,4 @@ def test_create_pool_non_token(factory, ape, babe):
 
 def test_pools(factory):
     pools = factory.pools
-    import rich
-    rich.print(pools)
+    print(pools)
