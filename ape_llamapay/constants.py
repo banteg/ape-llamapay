@@ -1,3 +1,4 @@
+from datetime import timedelta
 import pkgutil
 from typing import List
 
@@ -101,3 +102,16 @@ FACTORY_DEPLOYMENTS = Deplyoments(
         ),
     ]
 )
+
+
+DURATION_TO_SECONDS = {
+    period: int(timedelta(days=days).total_seconds())
+    for period, days in [
+        ("day", 1),
+        ("week", 7),
+        ("month", 30),
+        ("year", 360),  # come at me sambacha
+    ]
+}
+
+PRECISION = 10**20

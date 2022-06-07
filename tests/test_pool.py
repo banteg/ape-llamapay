@@ -1,6 +1,6 @@
 from ape_llamapay.llamapay import Stream
 from hexbytes import HexBytes
-
+from ape_llamapay.constants import DURATION_TO_SECONDS
 
 def test_stream_id(pool):
     # sample stream from here
@@ -13,3 +13,11 @@ def test_stream_id(pool):
     stream_id = HexBytes("0xd634cf4ed24cbb7ce73d0764bcd0067c7d31f9143836ce431fe8c85e6f76263a")
     assert stream_id == pool.contract.getStreamId(stream.sender, stream.receiver, stream.rate)
     assert stream_id == stream.stream_id
+def test_duration():
+    # https://github.com/LlamaPay/interface/blob/main/utils/constants.ts#L282
+    assert DURATION_TO_SECONDS['day'] == 86_400
+    assert DURATION_TO_SECONDS['week'] == 604_800
+    assert DURATION_TO_SECONDS['month'] == 2_592_000
+    assert DURATION_TO_SECONDS['year'] == 31_104_000
+
+
