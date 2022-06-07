@@ -1,15 +1,15 @@
 import pytest
 
-from llamapay import Factory, Pool, Stream
+from llamapay import Factory, Stream
 
 
 @pytest.fixture(scope="session")
-def ape(accounts):
+def bird(accounts):
     return accounts[0]
 
 
 @pytest.fixture(scope="session")
-def babe(accounts):
+def bee(accounts):
     return accounts[1]
 
 
@@ -24,5 +24,6 @@ def pool(factory):
 
 
 @pytest.fixture(scope="session")
-def stream(pool):
-    return Stream(source=ape, target=babe, rate=1e20, pool=pool)
+def stream(pool, bird, bee):
+    # stream 0.01 DAI per second from bird to bee
+    return Stream(source=str(bird), target=str(bee), rate=10**18, pool=pool)

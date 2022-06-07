@@ -1,5 +1,3 @@
-from secrets import token_urlsafe
-
 import ape
 import pytest
 from ape.exceptions import ConversionError
@@ -14,25 +12,24 @@ def test_factory_get_pool(factory):
 
 def test_factory_get_pool_not_address(factory):
     with pytest.raises(ConversionError):
-        factory.get_pool(token_urlsafe(16))
+        factory.get_pool("not_an_address")
 
 
 def test_factory_get_pool_not_exists(factory):
-    with pytest.raises(PoolNotDeployed) as e:
+    with pytest.raises(PoolNotDeployed):
         factory.get_pool("UST")  # too soon
 
 
-def test_create_pool(factory, ape):
-    pool = factory.create_pool("YFI", sender=ape)
-    print(pool)  # to hit the repr line
+def test_create_pool(factory, bird):
+    pool = factory.create_pool("YFI", sender=bird)
     assert pool.token == tokens["YFI"]
 
 
-def test_create_pool_non_token(factory, ape, babe):
+def test_create_pool_non_token(factory, bird, bee):
+    non_token = str(bee)
     with ape.reverts():
-        factory.create_pool(str(babe), sender=ape)
+        factory.create_pool(non_token, sender=bird)
 
 
 def test_pools(factory):
-    pools = factory.pools
-    print(pools)
+    assert len(factory.pools) >= 1
