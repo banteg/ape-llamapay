@@ -6,16 +6,12 @@ from ape.types import AddressType
 from ape.utils import ManagerAccessMixin
 from ape_tokens import tokens
 from ape_tokens.managers import ERC20
-from ethpm_types import PackageManifest
 
-from ape_llamapay.constants import FACTORY_DEPLOYMENTS
+from ape_llamapay.constants import FACTORY_DEPLOYMENTS, CONTRACT_TYPES
 
 
 class PoolNotDeployed(Exception):
     pass
-
-
-manifest = PackageManifest.parse_file(Path(__file__).parent / "manifest.json")
 
 
 class Factory(ManagerAccessMixin):
@@ -30,8 +26,7 @@ class Factory(ManagerAccessMixin):
             network=self.provider.network.name.replace("-fork", ""),
         )
         self.contract = self.create_contract(
-            self.deployment.address,
-            manifest.contract_types["LlamaPayFactory"],  # type: ignore
+            self.deployment.address, CONTRACT_TYPES["LlamaPayFactory"]
         )
 
     def get_pool(self, token: str) -> "Pool":
@@ -84,14 +79,12 @@ class Pool(ManagerAccessMixin):
     def __init__(self, address: AddressType, factory: Optional[Factory] = None):
         self.address = address
         self.factory = factory
+        self.contract = self.create_contract(self.address, CONTRACT_TYPES["LlamaPay"])
+        self.token = self.create_contract(self.contract.token(), ERC20)
 
     @cached_property
-    def contract(self):
-        return self.create_contract(self.address, manifest.contract_types["LlamaPay"])
-
-    @cached_property
-    def token(self):
-        return self.create_contract(self.contract.token(), ERC20)
+    def symbol(self):
+        return self.token.symbol()
 
     def get_logs(self):
         logs = self.provider.get_contract_logs(
@@ -104,7 +97,7 @@ class Pool(ManagerAccessMixin):
         return list(logs)
 
     def __repr__(self):
-        return f"<Pool address={self.address} token={self.token.symbol()}>"
+        return f"<Pool address={self.address} token={self.symbol}>"
 
     def __eq__(self, other) -> bool:
         return self.address == other.address

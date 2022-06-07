@@ -1,5 +1,10 @@
-from typing import List
+from pathlib import Path
+from typing import Dict, List
+
+from ethpm_types import PackageManifest
 from pydantic import BaseModel
+
+CONTRACT_TYPES = PackageManifest.parse_file(Path(__file__).parent / "manifest.json").contract_types
 
 
 class FactoryDeployment(BaseModel):
