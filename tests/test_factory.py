@@ -22,15 +22,15 @@ def test_factory_get_pool_not_exists(factory):
         factory.get_pool("UST")  # too soon
 
 
-def test_create_pool(factory, accounts):
-    pool = factory.create_pool("YFI", sender=accounts[0])
+def test_create_pool(factory, ape):
+    pool = factory.create_pool("YFI", sender=ape)
     print(pool)  # to hit the repr line
     assert pool.token == tokens["YFI"]
 
 
-def test_create_pool_non_token(factory, accounts):
+def test_create_pool_non_token(factory, ape, babe):
     with ape.reverts():
-        factory.create_pool(str(accounts[1]), sender=accounts[0])
+        factory.create_pool(str(babe), sender=ape)
 
 
 def test_pools(factory):

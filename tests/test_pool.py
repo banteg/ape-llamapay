@@ -4,6 +4,8 @@ from hexbytes import HexBytes
 from ape_llamapay.constants import DURATION_TO_SECONDS
 from ape_tokens.managers import ERC20
 
+from tests.conftest import babe
+
 # sample stream from here
 # https://ethtx.info/mainnet/0x7979a77ab8a30bc6cd12e1df92e5ba0478a8907caf6e100317b7968668d0d4a2/
 stream = Stream(
@@ -55,28 +57,28 @@ def test_rate(rate):
 ### actions
 
 
-def test_create_stream(pool, accounts):
+def test_create_stream(pool, ape, babe):
     rate = "100 DAI/month"
-    receipt = pool.create_stream(accounts[1], rate, sender=accounts[0])
+    receipt = pool.create_stream(babe, rate, sender=ape)
     log = next(receipt.decode_logs(pool.contract.StreamCreated))
     assert log.amountPerSec == Rate.parse(rate).per_sec
 
 
-def test_stream_withdraw(pool, accounts):
-    receipt = pool.withdraw(stream.payer, stream.receiver, stream.rate_per_sec, sender=accounts[0])
+def test_stream_withdraw(pool, ape):
+    receipt = pool.withdraw(stream.payer, stream.receiver, stream.rate_per_sec, sender=ape)
     log = next(receipt.decode_logs(ERC20.events["Transfer"]))
     assert log.amount > 0
 
 
-def test_stream_cancel(pool, accounts):
+def test_stream_cancel(pool, ape, babe):
     rate = "100 DAI/month"
-    pool.create_stream(accounts[1], rate, sender=accounts[0])
-    receipt = pool.cancel_stream(accounts[1], Rate.parse(rate).per_sec, sender=accounts[0])
+    pool.create_stream(babe, rate, sender=ape)
+    receipt = pool.cancel_stream(babe, Rate.parse(rate).per_sec, sender=ape)
     log = next(receipt.decode_logs(pool.contract.StreamCancelled))
 
 
-def test_stream_pause(pool, accounts):
+def test_stream_pause(pool, ape, babe):
     rate = "100 DAI/month"
-    pool.create_stream(accounts[1], rate, sender=accounts[0])
-    receipt = pool.pause_stream(accounts[1], Rate.parse(rate).per_sec, sender=accounts[0])
+    pool.create_stream(babe, rate, sender=ape)
+    receipt = pool.pause_stream(babe, Rate.parse(rate).per_sec, sender=ape)
     log = next(receipt.decode_logs(pool.contract.StreamPaused))
