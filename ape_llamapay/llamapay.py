@@ -154,6 +154,7 @@ class Stream(BaseModel):
 class Rate(BaseModel):
     amount: Decimal
     period: Literal["day", "week", "month", "year"]
+    token: Optional[str]
 
     @property
     def per_sec(self):
@@ -164,9 +165,15 @@ class Rate(BaseModel):
     def parse(cls, rate: str):
         amount, period = rate.split("/")
         assert period in DURATION_TO_SECONDS
-        amount, *token = amount.split()
+        
+        try:
+            amount, token = amount.split(maxsplit=2)
+        except ValueError:
+            amount, token = amount, None
+        
         amount = amount.replace(",", "_")
-        return cls(amount=Decimal(amount), period=period)
+
+        return cls(amount=Decimal(amount), period=period, token=token)
 
     def __repr__(self):
         return f"{self.amount}/{self.period}"
