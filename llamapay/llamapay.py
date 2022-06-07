@@ -1,6 +1,6 @@
 from decimal import Decimal
-from functools import cached_property
-from typing import List, Literal, Optional, Union
+from functools import cached_property, singledispatch, singledispatchmethod
+from typing import List, Literal, Optional
 
 from ape.api import ReceiptAPI
 from ape.types import AddressType, ContractLog
@@ -9,7 +9,7 @@ from ape_tokens import tokens
 from ape_tokens.managers import ERC20
 from eth_abi.packed import encode_abi_packed
 from eth_utils import keccak
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 from llamapay.constants import CONTRACT_TYPES, DURATION_TO_SECONDS, FACTORY_DEPLOYMENTS, PRECISION
 from llamapay.exceptions import PoolNotDeployed
@@ -88,7 +88,10 @@ class Pool(ManagerAccessMixin):
     def __init__(self, address: AddressType, factory: Factory):
         self.address = address
         self.factory = factory
-        self.contract = self.create_contract(self.address, CONTRACT_TYPES["LlamaPay"])  # type: ignore
+        self.contract = self.create_contract(
+            self.address,
+            CONTRACT_TYPES["LlamaPay"],  # type: ignore
+        )
         self.token = self.create_contract(self.contract.token(), ERC20)
         # cache
         self._logs: List[ContractLog] = []
@@ -107,7 +110,6 @@ class Pool(ManagerAccessMixin):
         start = self._last_logs_block
         head = self.chain_manager.blocks.height
         if start >= head:
-            print("already caught up")
             return
 
         logs = list(
@@ -204,7 +206,8 @@ class Pool(ManagerAccessMixin):
         return self.address == other.address
 
 
-class Stream(BaseModel):
+@dataclass
+class Stream:
     """
     Represents a payment stream.
     """
@@ -255,18 +258,36 @@ class Stream(BaseModel):
         arbitrary_types_allowed = True
 
 
-class Rate(BaseModel):
+@dataclass
+class Rate:
     amount: Decimal
     period: Literal["day", "week", "month", "year"]
-    token: Optional[str]
+    token: Optional[str] = None
+    raw_value: Optional[int] = None
 
     @property
     def per_sec(self):
         # this is the amount you feed to llamapay contracts
-        return int(self.amount * PRECISION / DURATION_TO_SECONDS[self.period])
+        return self.raw_value or int(self.amount * PRECISION / DURATION_TO_SECONDS[self.period])
 
+    @singledispatchmethod
     @classmethod
-    def parse(cls, rate: str):
+    def parse(cls, rate):
+        raise TypeError("unsupported rate type")
+
+    @parse.register
+    @classmethod
+    def parse_int(cls, rate: int):
+        per_month = Decimal(rate) * DURATION_TO_SECONDS["month"] / PRECISION
+        return cls(
+            amount=per_month,
+            period="month",
+            raw_value=rate,
+        )
+
+    @parse.register
+    @classmethod
+    def parse_str(cls, rate: str):
         amount, period = rate.split("/")
         assert period in DURATION_TO_SECONDS
 

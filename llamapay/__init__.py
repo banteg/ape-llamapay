@@ -1,2 +1,8 @@
-# Add module top-level imports here
-from .llamapay import Factory, Pool, Stream
+from .llamapay import Factory, Pool, Rate, Stream
+
+__all__ = [
+    "Factory",
+    "Pool",
+    "Stream",
+    "Rate",
+]

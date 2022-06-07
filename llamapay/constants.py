@@ -1,5 +1,5 @@
-from datetime import timedelta
 import pkgutil
+from datetime import timedelta
 from typing import List
 
 from ethpm_types import PackageManifest
