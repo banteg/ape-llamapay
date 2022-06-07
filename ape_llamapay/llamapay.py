@@ -1,13 +1,21 @@
+from decimal import Decimal
 from functools import cached_property
-from pathlib import Path
 from typing import List, Optional
 
 from ape.types import AddressType
 from ape.utils import ManagerAccessMixin
 from ape_tokens import tokens
 from ape_tokens.managers import ERC20
+from eth_abi.packed import encode_abi_packed
+from eth_utils import keccak
+from pydantic import BaseModel
 
-from ape_llamapay.constants import FACTORY_DEPLOYMENTS, CONTRACT_TYPES
+from ape_llamapay.constants import (
+    CONTRACT_TYPES,
+    DURATION_TO_SECONDS,
+    FACTORY_DEPLOYMENTS,
+    PRECISION,
+)
 
 
 class PoolNotDeployed(Exception):
@@ -38,7 +46,7 @@ class Factory(ManagerAccessMixin):
         if not is_deployed:
             raise PoolNotDeployed("deterministic address: %s" % address)
 
-        return Pool(address)
+        return Pool(address, factory=self)
 
     def create_pool(self, token: str, **kwargs) -> "Pool":
         """
@@ -56,7 +64,10 @@ class Factory(ManagerAccessMixin):
         """
         # TODO update to use multicall
         pool_count = self.contract.getLlamaPayContractCount()
-        pools = [Pool(self.contract.getLlamaPayContractByIndex(i)) for i in range(pool_count)]
+        pools = [
+            Pool(self.contract.getLlamaPayContractByIndex(i), factory=self)
+            for i in range(pool_count)
+        ]
         return pools
 
     def _resolve_token(self, token: str) -> AddressType:
@@ -76,15 +87,19 @@ class Pool(ManagerAccessMixin):
     A pool handles all streams for a specific token.
     """
 
-    def __init__(self, address: AddressType, factory: Optional[Factory] = None):
+    def __init__(self, address: AddressType, factory: Factory):
         self.address = address
         self.factory = factory
-        self.contract = self.create_contract(self.address, CONTRACT_TYPES["LlamaPay"])
+        self.contract = self.create_contract(self.address, CONTRACT_TYPES["LlamaPay"])  # type: ignore
         self.token = self.create_contract(self.contract.token(), ERC20)
 
     @cached_property
     def symbol(self):
         return self.token.symbol()
+
+    @cached_property
+    def scale(self):
+        return 10 ** self.token.decimals()
 
     def get_logs(self):
         logs = self.provider.get_contract_logs(
@@ -95,6 +110,9 @@ class Pool(ManagerAccessMixin):
             block_page_size=10_000,
         )
         return list(logs)
+
+    def get_balance(self, payer: AddressType) -> Decimal:
+        return Decimal(self.contract.balances(payer)) / self.scale
 
     def __repr__(self):
         return f"<Pool address={self.address} token={self.symbol}>"

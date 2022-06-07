@@ -13,6 +13,13 @@ def test_stream_id(pool):
     stream_id = HexBytes("0xd634cf4ed24cbb7ce73d0764bcd0067c7d31f9143836ce431fe8c85e6f76263a")
     assert stream_id == pool.contract.getStreamId(stream.sender, stream.receiver, stream.rate)
     assert stream_id == stream.stream_id
+
+
+def test_get_balance(pool):
+    balance = pool.get_balance("0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52")
+    print(balance)
+
+
 def test_duration():
     # https://github.com/LlamaPay/interface/blob/main/utils/constants.ts#L282
     assert DURATION_TO_SECONDS['day'] == 86_400
