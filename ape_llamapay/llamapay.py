@@ -126,9 +126,10 @@ class Stream(BaseModel):
     Represents a payment stream.
     """
 
+    token: Optional[str]
     sender: str
     receiver: str
-    rate: int
+    rate: "Rate"
     reason: Optional[str]
 
     @property
@@ -139,3 +140,14 @@ class Stream(BaseModel):
                 [self.sender, self.receiver, self.rate],
             )
         )
+
+
+class Rate(int):
+    @classmethod
+    def from_string(cls, rate: str):
+        print(f"parsing {rate}")
+        amount, period = rate.split("/")
+        assert period in DURATION_TO_SECONDS
+        amount, *token = amount.split()
+        amount = amount.replace(",", "_")
+        return cls(Decimal(amount) * PRECISION / DURATION_TO_SECONDS[period])

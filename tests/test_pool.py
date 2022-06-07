@@ -1,4 +1,4 @@
-from ape_llamapay.llamapay import Stream
+from ape_llamapay.llamapay import Rate, Stream
 from hexbytes import HexBytes
 from ape_llamapay.constants import DURATION_TO_SECONDS
 
@@ -28,3 +28,8 @@ def test_duration():
     assert DURATION_TO_SECONDS['year'] == 31_104_000
 
 
+def test_rate():
+    print(Rate.from_string('1000000/year'))
+    print(Rate.from_string('100,000 UNI/day'))
+    print(Rate.from_string('10_000 USDC/month'))
+    print(Rate.from_string('10 YFI/year'))
