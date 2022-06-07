@@ -66,3 +66,17 @@ def test_stream_withdraw(pool, accounts):
     receipt = pool.withdraw(stream.payer, stream.receiver, stream.rate_per_sec, sender=accounts[0])
     log = next(receipt.decode_logs(ERC20.events["Transfer"]))
     assert log.amount > 0
+
+
+def test_stream_cancel(pool, accounts):
+    rate = "100 DAI/month"
+    pool.create_stream(accounts[1], rate, sender=accounts[0])
+    receipt = pool.cancel_stream(accounts[1], Rate.parse(rate).per_sec, sender=accounts[0])
+    log = next(receipt.decode_logs(pool.contract.StreamCancelled))
+
+
+def test_stream_pause(pool, accounts):
+    rate = "100 DAI/month"
+    pool.create_stream(accounts[1], rate, sender=accounts[0])
+    receipt = pool.pause_stream(accounts[1], Rate.parse(rate).per_sec, sender=accounts[0])
+    log = next(receipt.decode_logs(pool.contract.StreamPaused))

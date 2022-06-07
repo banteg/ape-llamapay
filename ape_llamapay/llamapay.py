@@ -132,6 +132,22 @@ class Pool(ManagerAccessMixin):
     ) -> ReceiptAPI:
         return self.contract.createStream(receiver, Rate.parse(rate).per_sec, **tx_args)
 
+    def cancel_stream(
+        self,
+        receiver: AddressType,
+        rate_per_sec: int,
+        **tx_args,
+    ) -> ReceiptAPI:
+        return self.contract.cancelStream(receiver, rate_per_sec, **tx_args)
+
+    def pause_stream(
+        self,
+        receiver: AddressType,
+        rate_per_sec: int,
+        **tx_args,
+    ) -> ReceiptAPI:
+        return self.contract.pauseStream(receiver, rate_per_sec, **tx_args)
+
     def withdraw(
         self,
         payer: AddressType,
