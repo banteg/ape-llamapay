@@ -190,7 +190,7 @@ class Pool(ManagerAccessMixin):
 
         return self.contract.deposit(amount * self.scale, **tx_args)
 
-    def withdraw(self, amount: Optional[Decimal] = None, **tx_args) -> ReceiptAPI:
+    def withdraw(self, amount=None, **tx_args) -> ReceiptAPI:
         """
         Withdraw funding balance from a pool.
 
@@ -198,7 +198,10 @@ class Pool(ManagerAccessMixin):
             amount: decimal amount in tokens [default: withdraw all]
         """
         if amount:
-            return self.contract.withdrawPayer(amount * self.scale, **tx_args)
+            amount = self._convert_amount(amount)
+            # withdrawPayer arg is scaled to 1e20, but we work with a token value
+            amount *= self.internal_scale
+            return self.contract.withdrawPayer(amount, **tx_args)
         else:
             return self.contract.withdrawPayerAll(**tx_args)
 
