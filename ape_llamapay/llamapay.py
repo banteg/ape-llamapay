@@ -113,7 +113,7 @@ class Pool(ManagerAccessMixin):
         return list(logs)
 
     def get_balance(self, payer: AddressType) -> Decimal:
-        return Decimal(self.contract.balances(payer)) / self.scale
+        return Decimal(self.contract.getPayerBalance(payer)) / self.scale
 
     def get_withdrawable_amount(
         self,
@@ -156,6 +156,39 @@ class Pool(ManagerAccessMixin):
         **tx_args,
     ) -> ReceiptAPI:
         return self.contract.withdraw(payer, receiver, rate_per_sec, **tx_args)
+    def approve(self, amount: Optional[Decimal] = None, **tx_args) -> ReceiptAPI:
+        """
+        Approve token to be deposited into a pool.
+
+        Arguments:
+            amount: decimal amount in tokens [default: infinite]
+        """
+        amount = 2**256 - 1 if amount is None else amount * self.scale
+        return self.token.approve(self.address, amount, **tx_args)
+
+    def deposit(self, amount: Decimal, **tx_args) -> ReceiptAPI:
+        """
+        Deposit funding balance into a pool.
+
+        Arguments:
+            amount: decimal amount in tokens
+        """
+        if self.token.allowance(tx_args["sender"], self.address) < amount:
+            self.approve(amount, **tx_args)
+
+        return self.contract.deposit(amount * self.scale, **tx_args)
+
+    def withdraw(self, amount: Optional[Decimal] = None, **tx_args) -> ReceiptAPI:
+        """
+        Withdraw funding balance from a pool.
+
+        Arguments:
+            amount: decimal amount in tokens [default: withdraw all]
+        """
+        if amount:
+            return self.contract.withdrawPayer(amount * self.scale, **tx_args)
+        else:
+            return self.contract.withdrawPayerAll(**tx_args)
 
     def __repr__(self):
         return f"<Pool address={self.address} token={self.symbol}>"
