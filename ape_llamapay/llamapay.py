@@ -1,6 +1,6 @@
 from decimal import Decimal
 from functools import cached_property
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from ape.types import AddressType
 from ape.utils import ManagerAccessMixin
@@ -142,12 +142,22 @@ class Stream(BaseModel):
         )
 
 
-class Rate(int):
+class Rate(BaseModel):
+    amount: Decimal
+    period: Literal["day", "week", "month", "year"]
+
+    @property
+    def per_sec(self):
+        # this is the amount you feed to llamapay contracts
+        return int(self.amount * PRECISION / DURATION_TO_SECONDS[self.period])
+
     @classmethod
-    def from_string(cls, rate: str):
-        print(f"parsing {rate}")
+    def parse(cls, rate: str):
         amount, period = rate.split("/")
         assert period in DURATION_TO_SECONDS
         amount, *token = amount.split()
         amount = amount.replace(",", "_")
-        return cls(Decimal(amount) * PRECISION / DURATION_TO_SECONDS[period])
+        return cls(amount=Decimal(amount), period=period)
+
+    def __repr__(self):
+        return f"{self.amount}/{self.period}"

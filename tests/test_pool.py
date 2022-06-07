@@ -1,6 +1,8 @@
+import pytest
 from ape_llamapay.llamapay import Rate, Stream
 from hexbytes import HexBytes
 from ape_llamapay.constants import DURATION_TO_SECONDS
+
 
 def test_stream_id(pool):
     # sample stream from here
@@ -22,14 +24,22 @@ def test_get_balance(pool):
 
 def test_duration():
     # https://github.com/LlamaPay/interface/blob/main/utils/constants.ts#L282
-    assert DURATION_TO_SECONDS['day'] == 86_400
-    assert DURATION_TO_SECONDS['week'] == 604_800
-    assert DURATION_TO_SECONDS['month'] == 2_592_000
-    assert DURATION_TO_SECONDS['year'] == 31_104_000
+    assert DURATION_TO_SECONDS["day"] == 86_400
+    assert DURATION_TO_SECONDS["week"] == 604_800
+    assert DURATION_TO_SECONDS["month"] == 2_592_000
+    assert DURATION_TO_SECONDS["year"] == 31_104_000
 
 
-def test_rate():
-    print(Rate.from_string('1000000/year'))
-    print(Rate.from_string('100,000 UNI/day'))
-    print(Rate.from_string('10_000 USDC/month'))
-    print(Rate.from_string('10 YFI/year'))
+@pytest.mark.parametrize(
+    "rate",
+    [
+        "1000000/year",
+        "100,000 UNI/day",
+        "10_000 USDC/month",
+        "10 YFI/year",
+    ],
+)
+def test_rate(rate):
+    r = Rate.parse(rate)
+    print(r)
+    print(repr(r))
