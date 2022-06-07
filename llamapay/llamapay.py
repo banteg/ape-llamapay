@@ -198,6 +198,24 @@ class Pool(ManagerAccessMixin):
         else:
             return self.contract.withdrawPayerAll(**tx_args)
 
+    def _convert_amount(self, amount: Union[None, int, Decimal, str]) -> int:
+        """
+        None -> max_uint
+        int -> wei
+        Decimal -> scaled to token decimals
+        str -> converted by ape-tokens
+        """
+        if amount is None:
+            return 2**256 - 1
+        if isinstance(amount, int):
+            return amount
+        if isinstance(amount, Decimal):
+            return int(amount * self.scale)
+        if isinstance(amount, str):
+            return self.conversion_manager.convert(amount, int)
+
+        raise TypeError("invalid amount")
+
     def __repr__(self):
         return f"<Pool address={self.address} token={self.symbol}>"
 
