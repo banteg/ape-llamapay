@@ -115,15 +115,6 @@ class Pool(ManagerAccessMixin):
     def get_balance(self, payer: AddressType) -> Decimal:
         return Decimal(self.contract.getPayerBalance(payer)) / self.scale
 
-    def get_withdrawable_amount(
-        self,
-        payer: AddressType,
-        receiver: AddressType,
-        rate_per_sec: int,
-    ) -> Decimal:
-        result = self.contract.withdrawable(payer, receiver, rate_per_sec)
-        return Decimal(result.withdrawableAmount) / self.scale
-
     def approve(self, amount: Optional[Decimal] = None, **tx_args) -> ReceiptAPI:
         """
         Approve token to be deposited into a pool.
@@ -162,6 +153,7 @@ class Pool(ManagerAccessMixin):
         return f"<Pool address={self.address} token={self.symbol}>"
 
     def __eq__(self, other) -> bool:
+        assert isinstance(other, Pool)
         return self.address == other.address
 
 
@@ -171,7 +163,7 @@ class Stream(BaseModel):
     """
 
     source: str
-    receiver: str
+    target: str
     rate: int  # rate in tokens per second, scaled to 1e20, doesn't depend of token decimals
     pool: Pool
 
@@ -180,26 +172,26 @@ class Stream(BaseModel):
         return keccak(
             encode_abi_packed(
                 ["address", "address", "uint216"],
-                [self.source, self.receiver, self.rate],
+                [self.source, self.target, self.rate],
             )
         )
 
     def create(self, **tx_args):
-        return self.pool.contract.createStream(self.receiver, self.rate, **tx_args)
+        return self.pool.contract.createStream(self.target, self.rate, **tx_args)
 
     def pause(self, **tx_args):
-        return self.pool.contract.pauseStream(self.receiver, self.rate, **tx_args)
+        return self.pool.contract.pauseStream(self.target, self.rate, **tx_args)
 
     def cancel(self, **tx_args):
-        return self.pool.contract.pauseStream(self.receiver, self.rate, **tx_args)
+        return self.pool.contract.pauseStream(self.target, self.rate, **tx_args)
 
     def replace(self, stream: "Stream", **tx_args):
         return self.pool.contract.modifyStream(
-            self.receiver, self.rate, stream.receiver, stream.rate, **tx_args
+            self.target, self.rate, stream.target, stream.rate, **tx_args
         )
 
     def receive(self, **tx_args):
-        return self.pool.contract.withdraw(self.source, self.receiver, self.rate, **tx_args)
+        return self.pool.contract.withdraw(self.source, self.target, self.rate, **tx_args)
 
     @property
     def balance(self):
