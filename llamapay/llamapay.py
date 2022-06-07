@@ -207,6 +207,15 @@ class Pool(ManagerAccessMixin):
         else:
             return self.contract.withdrawPayerAll(**tx_args)
 
+    def make_stream(self, source, target, rate) -> "Stream":
+        """
+        Prepare a stream and calculate the rate.
+        """
+        source = self.conversion_manager.convert(source, AddressType)
+        target = self.conversion_manager.convert(target, AddressType)
+        rate = convert_rate(rate)
+        return Stream(source, target, rate, self)
+
     def _convert_amount(self, amount: Union[None, int, Decimal, str]) -> int:
         """
         None -> max_uint
