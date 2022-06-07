@@ -1,83 +1,59 @@
+from decimal import Decimal
 import pytest
 from ape_tokens.managers import ERC20
-from hexbytes import HexBytes
 
-from llamapay import Stream
 from llamapay.constants import DURATION_TO_SECONDS
-
-# sample stream from here
-# https://ethtx.info/mainnet/0x7979a77ab8a30bc6cd12e1df92e5ba0478a8907caf6e100317b7968668d0d4a2/
-stream = Stream(
-    payer="0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52",
-    receiver="0x908dcdb61189b56f5cb7b0c60d332e3ee18d9300",
-    rate_per_sec=192901234567901234,
-)
-stream_id = HexBytes("0xd634cf4ed24cbb7ce73d0764bcd0067c7d31f9143836ce431fe8c85e6f76263a")
+from llamapay import Rate
 
 
-def test_stream_id(pool):
-    assert stream_id == pool.contract.getStreamId(stream.payer, stream.receiver, stream.rate)
-    assert stream_id == stream.stream_id
+### views
 
 
-def test_get_balance(pool):
-    balance = pool.get_balance("0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52")
-    print(balance)
-
-
-def test_stream_withdrawable(pool):
-    withdrawable = pool.get_withdrawable_amount(stream.payer, stream.receiver, stream.rate_per_sec)
-    assert withdrawable > 0
-
-
-def test_duration():
-    # https://github.com/LlamaPay/interface/blob/main/utils/constants.ts#L282
-    assert DURATION_TO_SECONDS["day"] == 86_400
-    assert DURATION_TO_SECONDS["week"] == 604_800
-    assert DURATION_TO_SECONDS["month"] == 2_592_000
-    assert DURATION_TO_SECONDS["year"] == 31_104_000
-
-
-@pytest.mark.parametrize(
-    "rate",
-    [
-        "1000000/year",
-        "100,000 UNI/day",
-        "10_000 USDC/month",
-        "10 YFI/year",
-    ],
-)
-def test_rate(rate):
-    r = Rate.parse(rate)
-    print(r)
-    print(repr(r))
+def test_pool_get_balance(pool):
+    assert pool.get_balance("0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52") > 0
 
 
 ### actions
 
 
-def test_create_stream(pool, ape, babe):
-    rate = "100 DAI/month"
-    receipt = pool.create_stream(babe, rate, sender=ape)
-    log = next(receipt.decode_logs(pool.contract.StreamCreated))
-    assert log.amountPerSec == Rate.parse(rate).per_sec
+@pytest.mark.parametrize("amount", [10**21, "1000 DAI", Decimal("1000")])
+def test_pool_approve(pool, token, bird, amount):
+    wei_amount = 10**21
+    pool.approve(amount, sender=bird)
+    assert token.allowance(bird, pool.address) == wei_amount
 
 
-def test_stream_withdraw(pool, ape):
-    receipt = pool.withdraw(stream.payer, stream.receiver, stream.rate_per_sec, sender=ape)
-    log = next(receipt.decode_logs(ERC20.events["Transfer"]))
-    assert log.amount > 0
+def test_pool_approve_inf(pool, token, bird):
+    pool.approve(sender=bird)
+    max_uint = 2**256 - 1
+    assert token.allowance(bird, pool.address) == max_uint
 
 
-def test_stream_cancel(pool, ape, babe):
-    rate = "100 DAI/month"
-    pool.create_stream(babe, rate, sender=ape)
-    receipt = pool.cancel_stream(babe, Rate.parse(rate).per_sec, sender=ape)
-    log = next(receipt.decode_logs(pool.contract.StreamCancelled))
+@pytest.mark.parametrize("amount", [10**21, "1000 DAI", Decimal("1000")])
+def test_pool_deposit(pool, token, bird, amount):
+    token_amount = Decimal("1000")
+    # should approve automatically
+    pool.deposit(amount, sender=bird)
+    assert pool.get_balance(bird) == token_amount
+    assert token.allowance(bird, pool.address) == 0
 
 
-def test_stream_pause(pool, ape, babe):
-    rate = "100 DAI/month"
-    pool.create_stream(babe, rate, sender=ape)
-    receipt = pool.pause_stream(babe, Rate.parse(rate).per_sec, sender=ape)
-    log = next(receipt.decode_logs(pool.contract.StreamPaused))
+@pytest.mark.parametrize("amount", [10**21, "1000 DAI", Decimal("1000")])
+def test_pool_withdraw(pool, bird, token, amount):
+    amount = pool._convert_amount(amount)
+    pool.deposit(amount, sender=bird)
+    pool.withdraw(amount, sender=bird)
+    assert pool.get_balance(str(bird)) == 0
+    assert token.balanceOf(str(bird)) == 10**24
+
+
+@pytest.mark.parametrize("amount", [10**21, "1000 DAI", Decimal("1000")])
+def test_pool_withdraw_all(pool, bird, token, amount):
+    pool.deposit(amount, sender=bird)
+    pool.withdraw(sender=bird)
+    assert token.balanceOf(str(bird)) == 10**24
+    print(token.balanceOf(str(bird)))
+
+
+def test_pool_create_stream():
+    ...
