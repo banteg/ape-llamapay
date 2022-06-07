@@ -2,7 +2,7 @@ from decimal import Decimal
 from functools import cached_property
 from typing import List, Literal, Optional, Union
 
-from ape.types import AddressType
+from ape.types import AddressType, ContractLog
 from ape.utils import ManagerAccessMixin
 from ape_tokens import tokens
 from ape_tokens.managers import ERC20
@@ -93,6 +93,10 @@ class Pool(ManagerAccessMixin):
         self.factory = factory
         self.contract = self.create_contract(self.address, CONTRACT_TYPES["LlamaPay"])  # type: ignore
         self.token = self.create_contract(self.contract.token(), ERC20)
+        # cache
+        self._logs: List[ContractLog] = []
+        self._last_logs_block = self.factory.deployment.deploy_block
+        self._streams: List["Stream"] = []
 
     @cached_property
     def symbol(self):
@@ -102,15 +106,61 @@ class Pool(ManagerAccessMixin):
     def scale(self):
         return 10 ** self.token.decimals()
 
-    def get_logs(self):
-        logs = self.provider.get_contract_logs(
-            self.address,
-            self.contract.contract_type.events,
-            start_block=self.factory.deployment.deploy_block,
-            stop_block=self.chain_manager.blocks.height,
-            block_page_size=10_000,
+    def _refresh_logs(self):
+        start = self._last_logs_block
+        head = self.chain_manager.blocks.height
+        if start >= head:
+            print("already caught up")
+            return
+
+        logs = list(
+            self.provider.get_contract_logs(
+                self.address,
+                self.contract.contract_type.events,
+                start_block=start,
+                stop_block=head,
+                block_page_size=10_000,
+            )
         )
-        return list(logs)
+        self._last_logs_block = head + 1
+        self._logs.extend(logs)
+
+        for log in logs:
+            if log.name in ["StreamCreated", "StreamCreatedWithReason", "StreamModified"]:
+                self._streams.append(
+                    Stream(
+                        source=log.event_arguments["from"],
+                        target=log.to,
+                        rate=log.amountPerSec,
+                        pool=self,
+                    )
+                )
+
+    @property
+    def streams(self) -> List["Stream"]:
+        self._refresh_logs()
+        return self._streams[:]
+
+    def find_streams(
+        self,
+        *,
+        source: Optional[AddressType] = None,
+        target: Optional[AddressType] = None,
+    ) -> List["Stream"]:
+        # handle ens
+        if source:
+            source = self.conversion_manager.convert(source, AddressType)
+        if target:
+            target = self.conversion_manager.convert(target, AddressType)
+        # source & target
+        if source and target:
+            return [s for s in self.streams if s.source == source and s.target == target]
+        elif source:
+            return [s for s in self.streams if s.source == source]
+        elif target:
+            return [s for s in self.streams if s.target == target]
+        else:
+            raise ValueError("must specify source or target")
 
     def get_balance(self, payer: AddressType) -> Decimal:
         return Decimal(self.contract.getPayerBalance(payer)) / self.scale
@@ -197,6 +247,9 @@ class Stream(BaseModel):
     def balance(self):
         result = self.pool.contract.withdrawable(self.source, self.target, self.rate)
         return Decimal(result.withdrawableAmount) / self.pool.scale
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Rate(BaseModel):
