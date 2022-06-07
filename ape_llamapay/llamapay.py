@@ -101,3 +101,23 @@ class Pool(ManagerAccessMixin):
 
     def __eq__(self, other) -> bool:
         return self.address == other.address
+
+
+class Stream(BaseModel):
+    """
+    Represents a payment stream.
+    """
+
+    sender: str
+    receiver: str
+    rate: int
+    reason: Optional[str]
+
+    @property
+    def stream_id(self) -> bytes:
+        return keccak(
+            encode_abi_packed(
+                ["address", "address", "uint216"],
+                [self.sender, self.receiver, self.rate],
+            )
+        )
