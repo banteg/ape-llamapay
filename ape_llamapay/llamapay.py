@@ -137,7 +137,7 @@ class Pool(ManagerAccessMixin):
                 )
 
     @property
-    def streams(self) -> List["Stream"]:
+    def all_streams(self) -> List["Stream"]:
         self._refresh_logs()
         return self._streams[:]
 
@@ -154,11 +154,11 @@ class Pool(ManagerAccessMixin):
             target = self.conversion_manager.convert(target, AddressType)
         # source & target
         if source and target:
-            return [s for s in self.streams if s.source == source and s.target == target]
+            return [s for s in self.all_streams if s.source == source and s.target == target]
         elif source:
-            return [s for s in self.streams if s.source == source]
+            return [s for s in self.all_streams if s.source == source]
         elif target:
-            return [s for s in self.streams if s.target == target]
+            return [s for s in self.all_streams if s.target == target]
         else:
             raise ValueError("must specify source or target")
 
@@ -240,7 +240,10 @@ class Stream(BaseModel):
             self.target, self.rate, stream.target, stream.rate, **tx_args
         )
 
-    def receive(self, **tx_args):
+    def send(self, **tx_args):
+        """
+        Push the pending amount to a target. Can be called by anyone.
+        """
         return self.pool.contract.withdraw(self.source, self.target, self.rate, **tx_args)
 
     @property
