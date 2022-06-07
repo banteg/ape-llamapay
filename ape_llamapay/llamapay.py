@@ -115,6 +115,15 @@ class Pool(ManagerAccessMixin):
     def get_balance(self, payer: AddressType) -> Decimal:
         return Decimal(self.contract.balances(payer)) / self.scale
 
+    def get_withdrawable(
+        self,
+        payer: AddressType,
+        receiver: AddressType,
+        rate_per_sec: int,
+    ) -> Decimal:
+        result = self.contract.withdrawable(payer, receiver, rate_per_sec)
+        return Decimal(result.withdrawableAmount) / self.scale
+
     def create_stream(
         self,
         receiver: AddressType,
@@ -136,9 +145,9 @@ class Stream(BaseModel):
     """
 
     token: Optional[str]
-    sender: str
+    payer: str
     receiver: str
-    rate: "Rate"
+    rate_per_sec: int
     reason: Optional[str]
 
     @property
@@ -146,7 +155,7 @@ class Stream(BaseModel):
         return keccak(
             encode_abi_packed(
                 ["address", "address", "uint216"],
-                [self.sender, self.receiver, self.rate],
+                [self.payer, self.receiver, self.rate_per_sec],
             )
         )
 
@@ -165,13 +174,12 @@ class Rate(BaseModel):
     def parse(cls, rate: str):
         amount, period = rate.split("/")
         assert period in DURATION_TO_SECONDS
-        
+
         try:
             amount, token = amount.split(maxsplit=2)
         except ValueError:
             amount, token = amount, None
-        
+
         amount = amount.replace(",", "_")
 
         return cls(amount=Decimal(amount), period=period, token=token)
-
