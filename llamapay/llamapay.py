@@ -106,6 +106,10 @@ class Pool(ManagerAccessMixin):
     def scale(self):
         return 10 ** self.token.decimals()
 
+    @cached_property
+    def internal_scale(self):
+        return self.contract.DECIMALS_DIVISOR()
+
     def _refresh_logs(self):
         start = self._last_logs_block
         head = self.chain_manager.blocks.height
