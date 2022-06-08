@@ -41,18 +41,21 @@ with open("./README.md") as readme:
 
 
 setup(
-    name="ape-llamapay",
+    name="llamapay",
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
-    description="""ape-llamapay: ape sdk for llamapay""",
+    description="""llamapay: ape sdk for llamapay""",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="banteg",
-    author_email="admin@apeworx.io",
-    url="https://github.com/ApeWorX/<REPO_NAME>",
+    author_email="banteg@pm.me",
+    url="https://github.com/banteg/ape-llamapay",
     include_package_data=True,
     install_requires=[
         "importlib-metadata ; python_version<'3.8'",
+        "ape-tokens>=0.2.0",
+        "ape-ens>=0.2.0",
+        "eth-ape>=0.2.8.dev",
     ],  # NOTE: Add 3rd party libraries here
     python_requires=">=3.7,<4",
     extras_require=extras_require,
