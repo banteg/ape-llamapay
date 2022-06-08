@@ -327,9 +327,9 @@ def convert_rate(rate):
         amount, period = rate.split("/")
         assert period in DURATION_TO_SECONDS, "invalid period"
         try:
-            amount, token = amount.split(maxsplit=2)
+            amount, _ = amount.split(maxsplit=2)
         except ValueError:
-            amount, token = amount, None
+            amount, _ = amount, None
 
         amount = Decimal(amount.replace(",", "_"))
         return int(amount * PRECISION / DURATION_TO_SECONDS[period])

@@ -1,6 +1,3 @@
-from decimal import Decimal
-
-
 def test_stream_id(pool, stream):
     stream_id = pool.contract.getStreamId(stream.source, stream.target, stream.rate)
     assert stream.id == stream_id
