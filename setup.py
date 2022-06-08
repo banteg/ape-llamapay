@@ -55,7 +55,7 @@ setup(
         "importlib-metadata ; python_version<'3.8'",
         "ape-tokens>=0.2.0",
         "ape-ens>=0.2.0",
-        "eth-ape>=0.2.8.dev",
+        "eth-ape>=0.2.7.dev",
     ],  # NOTE: Add 3rd party libraries here
     python_requires=">=3.7,<4",
     extras_require=extras_require,
