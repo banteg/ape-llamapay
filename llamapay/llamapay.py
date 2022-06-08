@@ -263,24 +263,30 @@ class Stream:
         )
 
     def create(self, **tx_args):
+        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
         return self.pool.contract.createStream(self.target, self.rate, **tx_args)
 
     def pause(self, **tx_args):
+        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
         return self.pool.contract.pauseStream(self.target, self.rate, **tx_args)
 
     def cancel(self, **tx_args):
-        return self.pool.contract.pauseStream(self.target, self.rate, **tx_args)
+        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
+        return self.pool.contract.cancelStream(self.target, self.rate, **tx_args)
 
     def replace(self, stream: "Stream", **tx_args):
+        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
         return self.pool.contract.modifyStream(
             self.target, self.rate, stream.target, stream.rate, **tx_args
         )
 
     def send(self, **tx_args):
         """
-        Push the pending amount to a target. Can be called by anyone.
+        Push the pending withdrawal amount to target. Can be called by anyone.
         """
         return self.pool.contract.withdraw(self.source, self.target, self.rate, **tx_args)
+
+    withdraw = send
 
     @property
     def balance(self):

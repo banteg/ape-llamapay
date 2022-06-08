@@ -50,4 +50,3 @@ def stream(pool, bird, bee):
 def token(pool, bird):
     set_balance(str(pool.token), str(bird), 10**24, storage_index=2)
     return pool.token
-
