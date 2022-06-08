@@ -253,6 +253,11 @@ class Stream:
     rate: int  # rate in tokens per second, scaled to 1e20, doesn't depend of token decimals
     pool: Pool
 
+    def __post_init__(self):
+        self.source = self.conversion_manager.convert(self.source, AddressType)
+        self.target = self.conversion_manager.convert(self.target, AddressType)
+        self.rate = convert_rate(self.rate)
+
     @property
     def id(self) -> bytes:
         return keccak(
