@@ -177,8 +177,8 @@ class Pool(ManagerAccessMixin):
         else:
             raise ValueError("must specify source or target")
 
-    def get_balance(self, payer: AddressType) -> Decimal:
-        return Decimal(self.contract.getPayerBalance(payer)) / self.scale
+    def get_balance(self, source: AddressType) -> Decimal:
+        return Decimal(self.contract.getPayerBalance(source)) / self.scale
 
     def approve(self, amount=None, **tx_args) -> ReceiptAPI:
         """
