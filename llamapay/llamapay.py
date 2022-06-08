@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
-from functools import cached_property, singledispatchmethod
-from typing import List, Literal, Optional, Union
+from functools import cached_property
+from typing import List, Optional, Union
 
 from ape.api import ReceiptAPI
 from ape.types import AddressType, ContractLog
@@ -50,10 +50,22 @@ class Factory(ManagerAccessMixin):
 
         return self.get_pool(token)
 
-    def create_stream(self, recipient: AddressType, rate: str, token: Optional[str] = None):
+    def create_stream(self, target, rate, token=None, **tx_args) -> "Stream":
         """
-        >>> factory.create_stream('hentai.eth', '1000 DAI/month')
+        >>> factory.create_stream('banteg.eth', '1000 DAI/month')
         """
+        if token is None:
+            token = rate.split("/")[0].split()[1]
+        try:
+            pool = self.get_pool(token)
+        except PoolNotDeployed:
+            print(f"creating pool for {token}")
+            self.create_pool(token, **tx_args)
+
+        pool = self.get_pool(token)
+        stream = pool.make_stream(tx_args["sender"], target, rate)
+        stream.create(**tx_args)
+        return stream
 
     @property
     def pools(self) -> List["Pool"]:

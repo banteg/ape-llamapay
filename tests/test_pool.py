@@ -51,3 +51,8 @@ def test_pool_create_stream(pool, bird, bee):
     receipt = stream.create(sender=bird)
     log = next(receipt.decode_logs(pool.contract.StreamCreated))
     assert stream.rate == log.amountPerSec
+
+
+def test_factory_create_stream(factory, bird, bee):
+    stream = factory.create_stream(bee, "1000 DAI/month", sender=bird)
+    print(stream)
