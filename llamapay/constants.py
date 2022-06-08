@@ -110,7 +110,7 @@ DURATION_TO_SECONDS = {
         ("day", 1),
         ("week", 7),
         ("month", 30),
-        ("year", 360),  # come at me sambacha
+        ("year", 365.2425),
     ]
 }
 
