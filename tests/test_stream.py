@@ -52,4 +52,11 @@ def test_stream_replace(pool, bird, bee, stream):
     new_stream = pool.make_stream(str(bird), str(bee), stream.rate * 2)
     receipt = stream.replace(new_stream, sender=bird)
     log = next(receipt.decode_logs(pool.contract.StreamModified))
-    print(log.__dict__)
+    assert log.oldAmountPerSec * 2 == log.amountPerSec
+
+
+def test_stream_modify(pool, bird, bee, stream):
+    stream.create(sender=bird)
+    receipt = stream.modify(rate=stream.rate * 2, sender=bird)
+    log = next(receipt.decode_logs(pool.contract.StreamModified))
+    assert log.oldAmountPerSec * 2 == log.amountPerSec

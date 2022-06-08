@@ -243,7 +243,7 @@ class Pool(ManagerAccessMixin):
 
 
 @dataclass
-class Stream:
+class Stream(ManagerAccessMixin):
     """
     Represents a payment stream.
     """
@@ -268,27 +268,27 @@ class Stream:
         )
 
     def create(self, **tx_args):
-        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
+        assert tx_args["sender"] == self.source, f"sender must be {self.source}"
         return self.pool.contract.createStream(self.target, self.rate, **tx_args)
 
     def pause(self, **tx_args):
-        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
+        assert tx_args["sender"] == self.source, f"sender must be {self.source}"
         return self.pool.contract.pauseStream(self.target, self.rate, **tx_args)
 
     def cancel(self, **tx_args):
-        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
+        assert tx_args["sender"] == self.source, f"sender must be {self.source}"
         return self.pool.contract.cancelStream(self.target, self.rate, **tx_args)
 
     def replace(self, stream: "Stream", **tx_args):
-        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
+        assert tx_args["sender"] == self.source, f"sender must be {self.source}"
         return self.pool.contract.modifyStream(
             self.target, self.rate, stream.target, stream.rate, **tx_args
         )
 
     def modify(self, *, target=None, rate=None, **tx_args):
         # a worse version of replace because you don't get the stream instance
-        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
-        stream = Stream(self.source, target or self.target, rate or self.rate)
+        assert tx_args["sender"] == self.source, f"sender must be {self.source}"
+        stream = Stream(self.source, target or self.target, rate or self.rate, self.pool)
         return self.replace(stream, **tx_args)
 
     def send(self, **tx_args):
