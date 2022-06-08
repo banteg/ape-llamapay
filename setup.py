@@ -59,11 +59,10 @@ setup(
     ],  # NOTE: Add 3rd party libraries here
     python_requires=">=3.7,<4",
     extras_require=extras_require,
-    py_modules=["llamapay"],
     license="Apache-2.0",
     zip_safe=False,
     keywords="ethereum",
-    packages=find_packages(exclude=["tests", "tests.*"]),
+    packages=["llamapay"],
     package_data={"llamapay": ["py.typed"]},
     classifiers=[
         "Development Status :: 4 - Beta",
