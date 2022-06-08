@@ -285,6 +285,12 @@ class Stream:
             self.target, self.rate, stream.target, stream.rate, **tx_args
         )
 
+    def modify(self, *, target=None, rate=None, **tx_args):
+        # a worse version of replace because you don't get the stream instance
+        assert tx_args['sender'] == self.source, f'sender must be {self.source}'
+        stream = Stream(self.source, target or self.target, rate or self.rate)
+        return self.replace(stream, **tx_args)
+
     def send(self, **tx_args):
         """
         Push the pending withdrawal amount to target. Can be called by anyone.
